@@ -1,7 +1,5 @@
 package br.com.contae.application.categoria;
 
-import org.springframework.stereotype.Service;
-
 import br.com.contae.api.categoria.dto.CategoriaResponseDTO;
 import br.com.contae.api.categoria.dto.CategoriaRequestDTO;
 import br.com.contae.api.categoria.mapper.CategoriaMapper;
@@ -9,19 +7,19 @@ import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.usuario.Usuario;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
 import br.com.contae.infrastructure.usuario.UsuarioRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import org.springframework.http.HttpStatus;
 import java.util.List;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class CategoriaService {private final CategoriaRepository categoriaRepository;
-    private final UsuarioRepository usuarioRepository;
+@RequiredArgsConstructor
+public class CategoriaService {
 
-    public CategoriaService(CategoriaRepository categoriaRepository,
-                            UsuarioRepository usuarioRepository) {
-        this.categoriaRepository = categoriaRepository;
-        this.usuarioRepository = usuarioRepository;
-    }
+    private final CategoriaRepository categoriaRepository;
+    private final UsuarioRepository usuarioRepository;
 
     // Lista todas as categorias, ja convertidas para DTO de saida.
     public List<CategoriaResponseDTO> listar(String email) {

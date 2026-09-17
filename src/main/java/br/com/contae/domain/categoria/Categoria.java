@@ -1,6 +1,6 @@
 package br.com.contae.domain.categoria;
-import jakarta.persistence.*;
 import br.com.contae.domain.usuario.Usuario;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "categorias")

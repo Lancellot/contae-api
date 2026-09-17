@@ -8,7 +8,6 @@ public class CategoriaRequestDTO {
     @Size(max = 100, message = "O nome da categoria deve ter no máximo 100 caracteres")
     private String nome;
 
-    // Construtor vazio exigido para o Spring converter o JSON recebido.
     public CategoriaRequestDTO() {
     }
 
