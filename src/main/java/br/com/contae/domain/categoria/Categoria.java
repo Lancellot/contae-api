@@ -1,9 +1,6 @@
 package br.com.contae.domain.categoria;
 import br.com.contae.domain.usuario.Usuario;
 import jakarta.persistence.*;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
-import br.com.contae.domain.usuario.Usuario;
 
 @Entity
 @Table(name = "categorias")
