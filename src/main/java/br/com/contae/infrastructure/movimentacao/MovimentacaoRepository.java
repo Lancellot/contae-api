@@ -7,20 +7,25 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long> {
 
-    List<Movimentacao> findByContaId(Long contaId);
+    List<Movimentacao> findAllByConta_Usuario_Email(String email);
 
-    List<Movimentacao> findByCategoriaId(Long categoriaId);
+    List<Movimentacao> findByContaIdAndConta_Usuario_Email(Long contaId, String email);
+
+    List<Movimentacao> findByCategoriaIdAndConta_Usuario_Email(Long categoriaId, String email);
+
+    List<Movimentacao> findByDataAndConta_Usuario_Email(LocalDate data, String email);
+
+    Optional<Movimentacao> findByIdAndConta_Usuario_Email(Long id, String email);
 
     List<Movimentacao> findByTipoMovimentacao(TipoMovimentacao tipoMovimentacao);
 
     List<Movimentacao> findByTipoDespesa(TipoDespesa tipoDespesa);
 
     List<Movimentacao> findByRecorrente (boolean recorrente);
-
-    List<Movimentacao> findByData(LocalDate data);
 
     List<Movimentacao> findByDataBetween(LocalDate inicio, LocalDate fim);
 }

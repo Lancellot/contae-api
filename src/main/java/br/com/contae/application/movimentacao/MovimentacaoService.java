@@ -11,13 +11,17 @@ import br.com.contae.infrastructure.conta.ContaRepository;
 import br.com.contae.infrastructure.movimentacao.MovimentacaoRepository;
 
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class MovimentacaoService {
 
     private final MovimentacaoRepository movimentacaoRepository;
@@ -25,13 +29,14 @@ public class MovimentacaoService {
     private final CategoriaRepository categoriaRepository;
 
     // Criar
-    public MovimentacaoResponseDTO criar(MovimentacaoRequestDTO dto) {
+    @Transactional
+    public MovimentacaoResponseDTO criar(MovimentacaoRequestDTO dto, String email) {
 
-        Conta conta = contaRepository.findById(dto.getContaId())
-                .orElseThrow(() -> new RuntimeException("Conta não encontrada"));
+        Conta conta = contaRepository.findByIdAndUsuario_Email(dto.getContaId(), email)
+                .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"));
 
-        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        Categoria categoria = categoriaRepository.findByIdAndUsuario_Email(dto.getCategoriaId(), email)
+                .orElseThrow(() -> recursoNaoEncontrado("Categoria não encontrada"));
 
         Movimentacao movimentacao = MovimentacaoMapper.toEntity(
                 dto,
@@ -45,21 +50,20 @@ public class MovimentacaoService {
     }
 
     // Atualizar
+    @Transactional
     public MovimentacaoResponseDTO atualizar(
             Long id,
-            MovimentacaoRequestDTO dto) {
+            MovimentacaoRequestDTO dto,
+            String email) {
 
-        Movimentacao movimentacao = movimentacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Movimentação não encontrada"));
+        Movimentacao movimentacao = movimentacaoRepository.findByIdAndConta_Usuario_Email(id, email)
+                .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
 
-        Conta conta = contaRepository.findById(dto.getContaId())
-                .orElseThrow(() ->
-                        new RuntimeException("Conta não encontrada"));
+        Conta conta = contaRepository.findByIdAndUsuario_Email(dto.getContaId(), email)
+                .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"));
 
-        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() ->
-                        new RuntimeException("Categoria não encontrada"));
+        Categoria categoria = categoriaRepository.findByIdAndUsuario_Email(dto.getCategoriaId(), email)
+                .orElseThrow(() -> recursoNaoEncontrado("Categoria não encontrada"));
 
         MovimentacaoMapper.atualizar(
                 movimentacao,
@@ -74,48 +78,52 @@ public class MovimentacaoService {
     }
 
     // Deletar
-    public void deletar(Long id) {
+        @Transactional
+        public void deletar(Long id, String email) {
 
-        Movimentacao movimentacao = movimentacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Movimentação não encontrada"));
+                Movimentacao movimentacao = movimentacaoRepository.findByIdAndConta_Usuario_Email(id, email)
+                                .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
 
         movimentacaoRepository.delete(movimentacao);
     }
 
     // Buscar todas
-    public List<MovimentacaoResponseDTO> buscarTodas() {
+        public List<MovimentacaoResponseDTO> buscarTodas(String email) {
 
-        return movimentacaoRepository.findAll()
+                return movimentacaoRepository.findAllByConta_Usuario_Email(email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
     // Buscar movimentações por data
-    public List<MovimentacaoResponseDTO> buscarPorData(LocalDate data) {
+        public List<MovimentacaoResponseDTO> buscarPorData(LocalDate data, String email) {
 
-        return movimentacaoRepository.findByData(data)
+                return movimentacaoRepository.findByDataAndConta_Usuario_Email(data, email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
     // Buscar movimentações por categoria
-    public List<MovimentacaoResponseDTO> buscarPorCategoria(Long categoriaId) {
+        public List<MovimentacaoResponseDTO> buscarPorCategoria(Long categoriaId, String email) {
 
-        return movimentacaoRepository.findByCategoriaId(categoriaId)
+                return movimentacaoRepository.findByCategoriaIdAndConta_Usuario_Email(categoriaId, email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
     // Buscar movimentações por conta
-    public List<MovimentacaoResponseDTO> buscarPorConta(Long contaId) {
+        public List<MovimentacaoResponseDTO> buscarPorConta(Long contaId, String email) {
 
-        return movimentacaoRepository.findByContaId(contaId)
+                return movimentacaoRepository.findByContaIdAndConta_Usuario_Email(contaId, email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
+
+        private ResponseStatusException recursoNaoEncontrado(String mensagem) {
+                return new ResponseStatusException(HttpStatus.NOT_FOUND, mensagem);
+        }
 }

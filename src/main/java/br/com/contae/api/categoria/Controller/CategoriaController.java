@@ -24,8 +24,6 @@ public class CategoriaController {
     @GetMapping
     @Operation(summary = "Listar categorias", description = "Retorna todas as categorias cadastradas.")
     @ApiResponse(responseCode = "200", description = "Lista de categorias retornada com sucesso")
-    public List<CategoriaResponseDTO> listar() {
-        return categoriaService.listar();
     public List<CategoriaResponseDTO> listar(Authentication authentication) {
         return categoriaService.listar(authentication.getName());
     }
@@ -34,17 +32,13 @@ public class CategoriaController {
     @Operation(summary = "Buscar categoria por ID", description = "Retorna os dados de uma categoria específica.")
     @ApiResponse(responseCode = "200", description = "Categoria encontrada")
     @ApiResponse(responseCode = "404", description = "Categoria não encontrada")
-    public CategoriaResponseDTO buscarPorId(@PathVariable Long id) {
-        return categoriaService.buscarPorId(id);
     public CategoriaResponseDTO buscarPorId(@PathVariable Long id, Authentication authentication) {
         return categoriaService.buscarPorId(id, authentication.getName());
     }
 
     @PostMapping
     @Operation(summary = "Criar categoria", description = "Cria uma nova categoria a partir dos dados informados.")
-    @ApiResponse(responseCode = "200", description = "Categoria criada com sucesso")
-    public CategoriaResponseDTO salvar(@RequestBody CategoriaRequestDTO dto) {
-        return categoriaService.salvar(dto);
+    @ApiResponse(responseCode = "201", description = "Categoria criada com sucesso")
     public CategoriaResponseDTO salvar(@Valid @RequestBody CategoriaRequestDTO dto,
                                        Authentication authentication) {
         return categoriaService.salvar(dto, authentication.getName());
@@ -54,8 +48,6 @@ public class CategoriaController {
     @Operation(summary = "Excluir categoria", description = "Remove a categoria pelo ID informado.")
     @ApiResponse(responseCode = "204", description = "Categoria excluída com sucesso")
     @ApiResponse(responseCode = "404", description = "Categoria não encontrada")
-    public void excluir(@PathVariable Long id) {
-        categoriaService.excluir(id);
     public void excluir(@PathVariable Long id, Authentication authentication) {
         categoriaService.excluir(id, authentication.getName());
     }
