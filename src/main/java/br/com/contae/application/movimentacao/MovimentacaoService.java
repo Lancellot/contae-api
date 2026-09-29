@@ -39,6 +39,15 @@ public class MovimentacaoService {
                 categoria
         );
 
+        // Atualiza o saldo da conta
+        if (dto.getTipoMovimentacao().name().equals("DESPESA")) {
+            conta.sacar(dto.getValor());
+        } else if (dto.getTipoMovimentacao().name().equals("RECEITA")) {
+            conta.depositar(dto.getValor());
+        }
+
+        contaRepository.save(conta);
+
         Movimentacao salva = movimentacaoRepository.save(movimentacao);
 
         return MovimentacaoMapper.toResponseDTO(salva);
@@ -53,7 +62,21 @@ public class MovimentacaoService {
                 .orElseThrow(() ->
                         new RuntimeException("Movimentação não encontrada"));
 
-        Conta conta = contaRepository.findById(dto.getContaId())
+        // Conta antiga da movimentação
+        Conta contaAntiga = movimentacao.getConta();
+
+        // Desfaz o efeito da movimentação antiga
+        if (movimentacao.getTipoMovimentacao().name().equals("DESPESA")) {
+            contaAntiga.depositar(movimentacao.getValor());
+
+        } else if (movimentacao.getTipoMovimentacao().name().equals("RECEITA")) {
+            contaAntiga.sacar(movimentacao.getValor());
+        }
+
+        contaRepository.save(contaAntiga);
+
+        // Busca a nova conta
+        Conta novaConta = contaRepository.findById(dto.getContaId())
                 .orElseThrow(() ->
                         new RuntimeException("Conta não encontrada"));
 
@@ -61,12 +84,23 @@ public class MovimentacaoService {
                 .orElseThrow(() ->
                         new RuntimeException("Categoria não encontrada"));
 
+        // Atualiza os dados da movimentação
         MovimentacaoMapper.atualizar(
                 movimentacao,
                 dto,
-                conta,
+                novaConta,
                 categoria
         );
+
+        // Aplica o efeito da nova movimentação
+        if (dto.getTipoMovimentacao().name().equals("DESPESA")) {
+            novaConta.sacar(dto.getValor());
+
+        } else if (dto.getTipoMovimentacao().name().equals("RECEITA")) {
+            novaConta.depositar(dto.getValor());
+        }
+
+        contaRepository.save(novaConta);
 
         Movimentacao atualizada = movimentacaoRepository.save(movimentacao);
 
@@ -79,6 +113,17 @@ public class MovimentacaoService {
         Movimentacao movimentacao = movimentacaoRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("Movimentação não encontrada"));
+
+        Conta conta = movimentacao.getConta();
+
+        if (movimentacao.getTipoMovimentacao().name().equals("DESPESA")) {
+            conta.depositar(movimentacao.getValor());
+
+        } else if (movimentacao.getTipoMovimentacao().name().equals("RECEITA")) {
+            conta.sacar(movimentacao.getValor());
+        }
+
+        contaRepository.save(conta);
 
         movimentacaoRepository.delete(movimentacao);
     }

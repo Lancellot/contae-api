@@ -1,18 +1,18 @@
 package br.com.contae.application.categoria;
 
-import br.com.contae.api.categoria.dto.CategoriaResponseDTO;
 import br.com.contae.api.categoria.dto.CategoriaRequestDTO;
+import br.com.contae.api.categoria.dto.CategoriaResponseDTO;
 import br.com.contae.api.categoria.mapper.CategoriaMapper;
 import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.usuario.Usuario;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
 import br.com.contae.infrastructure.usuario.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import org.springframework.http.HttpStatus;
-import java.util.List;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor

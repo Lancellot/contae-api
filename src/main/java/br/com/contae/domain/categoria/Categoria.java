@@ -1,6 +1,7 @@
 package br.com.contae.domain.categoria;
 import br.com.contae.domain.usuario.Usuario;
 import jakarta.persistence.*;
+import lombok.Setter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import br.com.contae.domain.usuario.Usuario;
@@ -20,7 +21,9 @@ public class Categoria {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    // Altera o nome da categoria.
     // Nome da categoria.
+    @Setter
     @Column(nullable = false, length = 100)
     private String nome;
 
@@ -49,8 +52,4 @@ public class Categoria {
         return nome;
     }
 
-    // Altera o nome da categoria.
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
 }
