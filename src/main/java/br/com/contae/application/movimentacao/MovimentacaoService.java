@@ -6,6 +6,7 @@ import br.com.contae.api.movimentacao.mapper.MovimentacaoMapper;
 import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.conta.Conta;
 import br.com.contae.domain.movimentacao.Movimentacao;
+import br.com.contae.domain.movimentacao.TipoMovimentacao;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
 import br.com.contae.infrastructure.conta.ContaRepository;
 import br.com.contae.infrastructure.movimentacao.MovimentacaoRepository;
@@ -43,6 +44,12 @@ public class MovimentacaoService {
                 conta,
                 categoria
         );
+
+                if (dto.getTipoMovimentacao() == TipoMovimentacao.RECEITA) {
+                        conta.depositar(dto.getValor());
+                } else {
+                        conta.sacar(dto.getValor());
+                }
 
         Movimentacao salva = movimentacaoRepository.save(movimentacao);
 

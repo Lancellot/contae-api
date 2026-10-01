@@ -41,7 +41,7 @@ class MovimentacaoServiceTest {
     void deveCriarMovimentacaoUsandoRecursosDoUsuarioAutenticado() {
         String email = "usuario@contae.com";
         Usuario usuario = Usuario.builder().id(1L).email(email).build();
-        Conta conta = new Conta(usuario, "Conta", TipoConta.CORRENTE, BigDecimal.ZERO);
+        Conta conta = new Conta(usuario, "Conta", TipoConta.CORRENTE, BigDecimal.valueOf(20));
         Categoria categoria = new Categoria(usuario, "Alimentacao");
         MovimentacaoService service = new MovimentacaoService(
                 movimentacaoRepository, contaRepository, categoriaRepository);
@@ -54,6 +54,7 @@ class MovimentacaoServiceTest {
 
         verify(contaRepository).findByIdAndUsuario_Email(10L, email);
         verify(categoriaRepository).findByIdAndUsuario_Email(20L, email);
+        assertEquals(BigDecimal.TEN, conta.getSaldo());
     }
 
     @Test
