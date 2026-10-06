@@ -49,13 +49,13 @@ class MovimentacaoServiceTest {
         MovimentacaoService service = new MovimentacaoService(
                 movimentacaoRepository, contaRepository, categoriaRepository);
 
-        when(contaRepository.findByIdAndUsuario_Email(10L, email)).thenReturn(Optional.of(conta));
+        when(contaRepository.findLockedByIdAndUsuario_Email(10L, email)).thenReturn(Optional.of(conta));
         when(categoriaRepository.findByIdAndUsuario_Email(20L, email)).thenReturn(Optional.of(categoria));
         when(movimentacaoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.criar(request(10L, 20L), email);
 
-        verify(contaRepository).findByIdAndUsuario_Email(10L, email);
+        verify(contaRepository).findLockedByIdAndUsuario_Email(10L, email);
         verify(categoriaRepository).findByIdAndUsuario_Email(20L, email);
         assertEquals(BigDecimal.TEN, conta.getSaldo());
     }
@@ -66,7 +66,7 @@ class MovimentacaoServiceTest {
         MovimentacaoService service = new MovimentacaoService(
                 movimentacaoRepository, contaRepository, categoriaRepository);
 
-        when(contaRepository.findByIdAndUsuario_Email(10L, email)).thenReturn(Optional.empty());
+        when(contaRepository.findLockedByIdAndUsuario_Email(10L, email)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -114,8 +114,10 @@ class MovimentacaoServiceTest {
     void deveReverterSaldoAoExcluirMovimentacao() {
         Conta conta = conta(BigDecimal.valueOf(90));
         Movimentacao movimentacao = movimentacao(conta, TipoMovimentacao.DESPESA, BigDecimal.TEN);
-        when(movimentacaoRepository.findByIdAndConta_Usuario_Email(1L, "usuario@contae.com"))
+        when(movimentacaoRepository.findLockedByIdAndConta_Usuario_Email(1L, "usuario@contae.com"))
                 .thenReturn(Optional.of(movimentacao));
+        when(contaRepository.findLockedByIdAndUsuario_Email(any(), org.mockito.ArgumentMatchers.eq("usuario@contae.com")))
+                .thenReturn(Optional.of(conta));
         MovimentacaoService service = new MovimentacaoService(
                 movimentacaoRepository, contaRepository, categoriaRepository);
 
@@ -141,8 +143,8 @@ class MovimentacaoServiceTest {
     private MovimentacaoService prepararAtualizacao(Movimentacao movimentacao, Conta contaDestino) {
         String email = "usuario@contae.com";
         Categoria categoria = new Categoria(Usuario.builder().id(1L).email(email).build(), "Categoria");
-        when(movimentacaoRepository.findByIdAndConta_Usuario_Email(1L, email)).thenReturn(Optional.of(movimentacao));
-        when(contaRepository.findByIdAndUsuario_Email(any(), org.mockito.ArgumentMatchers.eq(email)))
+        when(movimentacaoRepository.findLockedByIdAndConta_Usuario_Email(1L, email)).thenReturn(Optional.of(movimentacao));
+        when(contaRepository.findLockedByIdAndUsuario_Email(any(), org.mockito.ArgumentMatchers.eq(email)))
                 .thenReturn(Optional.of(contaDestino));
         when(categoriaRepository.findByIdAndUsuario_Email(20L, email)).thenReturn(Optional.of(categoria));
         lenient().when(movimentacaoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
