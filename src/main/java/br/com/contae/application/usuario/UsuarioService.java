@@ -4,13 +4,13 @@ import br.com.contae.api.usuario.dto.UsuarioRequestDTO;
 import br.com.contae.api.usuario.dto.UsuarioResponseDTO;
 import br.com.contae.api.usuario.mapper.UsuarioMapper;
 import br.com.contae.domain.usuario.Usuario;
+import br.com.contae.domain.exception.ConflitoDeNegocioException;
+import br.com.contae.domain.exception.RecursoNaoEncontradoException;
 import br.com.contae.infrastructure.usuario.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class UsuarioService {
     @Transactional
     public UsuarioResponseDTO cadastrar(UsuarioRequestDTO dto) {
         if (usuarioRepository.existsByEmail(dto.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um usuário cadastrado com este email");
+            throw new ConflitoDeNegocioException("Já existe um usuário cadastrado com este email");
         }
 
         Usuario usuario = usuarioMapper.toEntity(dto);
@@ -57,7 +57,7 @@ public class UsuarioService {
         usuarioRepository.findByEmail(dto.email())
                 .filter(outro -> !outro.getId().equals(id))
                 .ifPresent(outro -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um usuário cadastrado com este email");
+                    throw new ConflitoDeNegocioException("Já existe um usuário cadastrado com este email");
                 });
 
         usuarioMapper.atualizarEntity(usuario, dto);
@@ -86,6 +86,6 @@ public class UsuarioService {
     private Usuario buscarEntidadePorId(Long id, String email) {
         return usuarioRepository.findById(id)
                 .filter(usuario -> usuario.getEmail().equals(email))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
     }
 }

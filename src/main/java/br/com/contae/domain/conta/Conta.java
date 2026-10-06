@@ -1,6 +1,7 @@
 package br.com.contae.domain.conta;
 
 import br.com.contae.domain.usuario.Usuario;
+import br.com.contae.domain.exception.SaldoInsuficienteException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -77,7 +78,7 @@ public class Conta {
             throw new IllegalArgumentException("O valor do saque deve ser positivo");
         }
         if (valor.compareTo(this.saldo) > 0) {
-            throw new IllegalArgumentException("Saldo insuficiente");
+            throw new SaldoInsuficienteException();
         }
         this.saldo = this.saldo.subtract(valor);
     }

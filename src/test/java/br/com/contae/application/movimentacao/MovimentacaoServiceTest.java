@@ -4,6 +4,8 @@ import br.com.contae.api.movimentacao.dto.MovimentacaoRequestDTO;
 import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.conta.Conta;
 import br.com.contae.domain.conta.TipoConta;
+import br.com.contae.domain.exception.RecursoNaoEncontradoException;
+import br.com.contae.domain.exception.SaldoInsuficienteException;
 import br.com.contae.domain.movimentacao.TipoMovimentacao;
 import br.com.contae.domain.movimentacao.Movimentacao;
 import br.com.contae.domain.usuario.Usuario;
@@ -14,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -68,11 +69,11 @@ class MovimentacaoServiceTest {
 
         when(contaRepository.findLockedByIdAndUsuario_Email(10L, email)).thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        RecursoNaoEncontradoException exception = assertThrows(
+                RecursoNaoEncontradoException.class,
                 () -> service.criar(request(10L, 20L), email));
 
-        assertEquals(404, exception.getStatusCode().value());
+        assertEquals("Conta não encontrada", exception.getMessage());
     }
 
     @Test
@@ -133,7 +134,7 @@ class MovimentacaoServiceTest {
         Movimentacao movimentacao = movimentacao(conta, TipoMovimentacao.RECEITA, BigDecimal.TEN);
         MovimentacaoService service = prepararAtualizacao(movimentacao, conta);
 
-        assertThrows(IllegalArgumentException.class, () -> service.atualizar(
+        assertThrows(SaldoInsuficienteException.class, () -> service.atualizar(
                 1L, request(10L, 20L, BigDecimal.valueOf(5), TipoMovimentacao.DESPESA), "usuario@contae.com"));
 
         assertEquals(BigDecimal.valueOf(5), conta.getSaldo());

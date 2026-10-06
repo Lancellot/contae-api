@@ -1,10 +1,11 @@
-﻿package br.com.contae.application.movimentacao;
+package br.com.contae.application.movimentacao;
 
 import br.com.contae.api.movimentacao.dto.MovimentacaoRequestDTO;
 import br.com.contae.api.movimentacao.dto.MovimentacaoResponseDTO;
 import br.com.contae.api.movimentacao.mapper.MovimentacaoMapper;
 import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.conta.Conta;
+import br.com.contae.domain.exception.RecursoNaoEncontradoException;
 import br.com.contae.domain.movimentacao.Movimentacao;
 import br.com.contae.domain.movimentacao.TipoMovimentacao;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
@@ -12,10 +13,8 @@ import br.com.contae.infrastructure.conta.ContaRepository;
 import br.com.contae.infrastructure.movimentacao.MovimentacaoRepository;
 
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -164,8 +163,8 @@ public class MovimentacaoService {
                 return contas;
         }
 
-        private ResponseStatusException recursoNaoEncontrado(String mensagem) {
-                return new ResponseStatusException(HttpStatus.NOT_FOUND, mensagem);
+        private RecursoNaoEncontradoException recursoNaoEncontrado(String mensagem) {
+                return new RecursoNaoEncontradoException(mensagem);
         }
 }
 
