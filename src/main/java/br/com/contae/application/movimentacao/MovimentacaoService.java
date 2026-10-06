@@ -1,4 +1,4 @@
-package br.com.contae.application.movimentacao;
+﻿package br.com.contae.application.movimentacao;
 
 import br.com.contae.api.movimentacao.dto.MovimentacaoRequestDTO;
 import br.com.contae.api.movimentacao.dto.MovimentacaoResponseDTO;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -66,6 +67,10 @@ public class MovimentacaoService {
         Movimentacao movimentacao = movimentacaoRepository.findByIdAndConta_Usuario_Email(id, email)
                 .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
 
+        Conta contaAnterior = movimentacao.getConta();
+        TipoMovimentacao tipoAnterior = movimentacao.getTipoMovimentacao();
+        BigDecimal valorAnterior = movimentacao.getValor();
+
         Conta conta = contaRepository.findByIdAndUsuario_Email(dto.getContaId(), email)
                 .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"));
 
@@ -79,6 +84,9 @@ public class MovimentacaoService {
                 categoria
         );
 
+        aplicarEfeito(contaAnterior, tipoAnterior, valorAnterior, true);
+        aplicarEfeito(conta, dto.getTipoMovimentacao(), dto.getValor(), false);
+
         Movimentacao atualizada = movimentacaoRepository.save(movimentacao);
 
         return MovimentacaoMapper.toResponseDTO(atualizada);
@@ -91,6 +99,7 @@ public class MovimentacaoService {
                 Movimentacao movimentacao = movimentacaoRepository.findByIdAndConta_Usuario_Email(id, email)
                                 .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
 
+        aplicarEfeito(movimentacao.getConta(), movimentacao.getTipoMovimentacao(), movimentacao.getValor(), true);
         movimentacaoRepository.delete(movimentacao);
     }
 
@@ -130,7 +139,17 @@ public class MovimentacaoService {
                 .toList();
     }
 
+        private void aplicarEfeito(Conta conta, TipoMovimentacao tipo, BigDecimal valor, boolean estornar) {
+                boolean receita = tipo == TipoMovimentacao.RECEITA;
+                if (receita != estornar) {
+                        conta.depositar(valor);
+                } else {
+                        conta.sacar(valor);
+                }
+        }
+
         private ResponseStatusException recursoNaoEncontrado(String mensagem) {
                 return new ResponseStatusException(HttpStatus.NOT_FOUND, mensagem);
         }
 }
+

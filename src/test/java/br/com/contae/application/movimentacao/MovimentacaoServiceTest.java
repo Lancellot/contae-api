@@ -5,6 +5,7 @@ import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.conta.Conta;
 import br.com.contae.domain.conta.TipoConta;
 import br.com.contae.domain.movimentacao.TipoMovimentacao;
+import br.com.contae.domain.movimentacao.Movimentacao;
 import br.com.contae.domain.usuario.Usuario;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
 import br.com.contae.infrastructure.conta.ContaRepository;
@@ -24,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class MovimentacaoServiceTest {
@@ -72,13 +75,106 @@ class MovimentacaoServiceTest {
         assertEquals(404, exception.getStatusCode().value());
     }
 
+    @Test
+    void deveReconciliarSaldoAoAlterarValor() {
+        Conta conta = conta(BigDecimal.valueOf(90));
+        Movimentacao movimentacao = movimentacao(conta, TipoMovimentacao.DESPESA, BigDecimal.TEN);
+        MovimentacaoService service = prepararAtualizacao(movimentacao, conta);
+
+        service.atualizar(1L, request(10L, 20L, BigDecimal.valueOf(20), TipoMovimentacao.DESPESA), "usuario@contae.com");
+
+        assertEquals(BigDecimal.valueOf(80), conta.getSaldo());
+    }
+
+    @Test
+    void deveReconciliarSaldoAoAlterarTipo() {
+        Conta conta = conta(BigDecimal.valueOf(90));
+        Movimentacao movimentacao = movimentacao(conta, TipoMovimentacao.DESPESA, BigDecimal.TEN);
+        MovimentacaoService service = prepararAtualizacao(movimentacao, conta);
+
+        service.atualizar(1L, request(10L, 20L, BigDecimal.TEN, TipoMovimentacao.RECEITA), "usuario@contae.com");
+
+        assertEquals(BigDecimal.valueOf(110), conta.getSaldo());
+    }
+
+    @Test
+    void deveTransferirEfeitoAoAlterarConta() {
+        Conta contaAnterior = conta(BigDecimal.valueOf(90));
+        Conta contaNova = conta(BigDecimal.valueOf(50));
+        Movimentacao movimentacao = movimentacao(contaAnterior, TipoMovimentacao.DESPESA, BigDecimal.TEN);
+        MovimentacaoService service = prepararAtualizacao(movimentacao, contaNova);
+
+        service.atualizar(1L, request(11L, 20L, BigDecimal.valueOf(20), TipoMovimentacao.DESPESA), "usuario@contae.com");
+
+        assertEquals(BigDecimal.valueOf(100), contaAnterior.getSaldo());
+        assertEquals(BigDecimal.valueOf(30), contaNova.getSaldo());
+    }
+
+    @Test
+    void deveReverterSaldoAoExcluirMovimentacao() {
+        Conta conta = conta(BigDecimal.valueOf(90));
+        Movimentacao movimentacao = movimentacao(conta, TipoMovimentacao.DESPESA, BigDecimal.TEN);
+        when(movimentacaoRepository.findByIdAndConta_Usuario_Email(1L, "usuario@contae.com"))
+                .thenReturn(Optional.of(movimentacao));
+        MovimentacaoService service = new MovimentacaoService(
+                movimentacaoRepository, contaRepository, categoriaRepository);
+
+        service.deletar(1L, "usuario@contae.com");
+
+        assertEquals(BigDecimal.valueOf(100), conta.getSaldo());
+        verify(movimentacaoRepository).delete(movimentacao);
+    }
+
+    @Test
+    void deveRejeitarEstornoDeReceitaQueDeixariaSaldoNegativo() {
+        Conta conta = conta(BigDecimal.valueOf(5));
+        Movimentacao movimentacao = movimentacao(conta, TipoMovimentacao.RECEITA, BigDecimal.TEN);
+        MovimentacaoService service = prepararAtualizacao(movimentacao, conta);
+
+        assertThrows(IllegalArgumentException.class, () -> service.atualizar(
+                1L, request(10L, 20L, BigDecimal.valueOf(5), TipoMovimentacao.DESPESA), "usuario@contae.com"));
+
+        assertEquals(BigDecimal.valueOf(5), conta.getSaldo());
+        verify(movimentacaoRepository, never()).save(any());
+    }
+
+    private MovimentacaoService prepararAtualizacao(Movimentacao movimentacao, Conta contaDestino) {
+        String email = "usuario@contae.com";
+        Categoria categoria = new Categoria(Usuario.builder().id(1L).email(email).build(), "Categoria");
+        when(movimentacaoRepository.findByIdAndConta_Usuario_Email(1L, email)).thenReturn(Optional.of(movimentacao));
+        when(contaRepository.findByIdAndUsuario_Email(any(), org.mockito.ArgumentMatchers.eq(email)))
+                .thenReturn(Optional.of(contaDestino));
+        when(categoriaRepository.findByIdAndUsuario_Email(20L, email)).thenReturn(Optional.of(categoria));
+        lenient().when(movimentacaoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        return new MovimentacaoService(movimentacaoRepository, contaRepository, categoriaRepository);
+    }
+
+    private Conta conta(BigDecimal saldo) {
+        return new Conta(Usuario.builder().id(1L).email("usuario@contae.com").build(),
+                "Conta", TipoConta.CORRENTE, saldo);
+    }
+
+    private Movimentacao movimentacao(Conta conta, TipoMovimentacao tipo, BigDecimal valor) {
+        Categoria categoria = new Categoria(conta.getUsuario(), "Categoria");
+        Movimentacao movimentacao = new Movimentacao();
+        movimentacao.setConta(conta);
+        movimentacao.setCategoria(categoria);
+        movimentacao.setTipoMovimentacao(tipo);
+        movimentacao.setValor(valor);
+        return movimentacao;
+    }
+
     private MovimentacaoRequestDTO request(Long contaId, Long categoriaId) {
+        return request(contaId, categoriaId, BigDecimal.TEN, TipoMovimentacao.DESPESA);
+    }
+
+    private MovimentacaoRequestDTO request(Long contaId, Long categoriaId, BigDecimal valor, TipoMovimentacao tipo) {
         return new MovimentacaoRequestDTO(
                 contaId,
                 categoriaId,
                 "Compra",
-                BigDecimal.TEN,
-                TipoMovimentacao.DESPESA,
+                valor,
+                tipo,
                 null,
                 LocalDate.of(2026, 1, 1),
                 false
