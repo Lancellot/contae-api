@@ -2,6 +2,7 @@ package br.com.contae.api.conta.dto;
 
 import br.com.contae.domain.conta.TipoConta;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,6 +20,7 @@ public class ContaRequestDTO {
 
     @NotNull(message = "O saldo é obrigatório")
     @DecimalMin(value = "0.0", inclusive = true, message = "O saldo não pode ser negativo")
+    @Digits(integer = 13, fraction = 2)
     private BigDecimal saldo;
 
     public ContaRequestDTO() {

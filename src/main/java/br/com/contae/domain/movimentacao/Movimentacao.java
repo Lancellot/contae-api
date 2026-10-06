@@ -29,7 +29,7 @@ public class Movimentacao {
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String descricao;
 
     @Column(nullable = false, precision = 15, scale = 2)
