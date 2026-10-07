@@ -1,4 +1,4 @@
-package br.com.contae.api.categoria.Controller;
+package br.com.contae.api.categoria.controller;
 
 import br.com.contae.api.categoria.dto.CategoriaRequestDTO;
 import br.com.contae.api.categoria.dto.CategoriaResponseDTO;
@@ -8,9 +8,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -39,16 +41,18 @@ public class CategoriaController {
     @PostMapping
     @Operation(summary = "Criar categoria", description = "Cria uma nova categoria a partir dos dados informados.")
     @ApiResponse(responseCode = "201", description = "Categoria criada com sucesso")
-    public CategoriaResponseDTO salvar(@Valid @RequestBody CategoriaRequestDTO dto,
-                                       Authentication authentication) {
-        return categoriaService.salvar(dto, authentication.getName());
+    public ResponseEntity<CategoriaResponseDTO> salvar(@Valid @RequestBody CategoriaRequestDTO dto,
+                                                       Authentication authentication) {
+        CategoriaResponseDTO categoria = categoriaService.salvar(dto, authentication.getName());
+        return ResponseEntity.created(URI.create("/categorias/" + categoria.getId())).body(categoria);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir categoria", description = "Remove a categoria pelo ID informado.")
     @ApiResponse(responseCode = "204", description = "Categoria excluída com sucesso")
     @ApiResponse(responseCode = "404", description = "Categoria não encontrada")
-    public void excluir(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Void> excluir(@PathVariable Long id, Authentication authentication) {
         categoriaService.excluir(id, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,9 +1,9 @@
 package br.com.contae.infrastructure.movimentacao;
 
 import br.com.contae.domain.movimentacao.Movimentacao;
-import br.com.contae.domain.movimentacao.TipoDespesa;
-import br.com.contae.domain.movimentacao.TipoMovimentacao;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,11 +21,7 @@ public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long
 
     Optional<Movimentacao> findByIdAndConta_Usuario_Email(Long id, String email);
 
-    List<Movimentacao> findByTipoMovimentacao(TipoMovimentacao tipoMovimentacao);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Movimentacao> findLockedByIdAndConta_Usuario_Email(Long id, String email);
 
-    List<Movimentacao> findByTipoDespesa(TipoDespesa tipoDespesa);
-
-    List<Movimentacao> findByRecorrente (boolean recorrente);
-
-    List<Movimentacao> findByDataBetween(LocalDate inicio, LocalDate fim);
 }

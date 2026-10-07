@@ -12,6 +12,7 @@ public record UsuarioRequestDTO(
 
         @NotBlank(message = "O email é obrigatório")
         @Email(message = "Email inválido")
+        @Size(max = 150, message = "O email deve ter no máximo 150 caracteres")
         String email,
 
         @NotBlank(message = "A senha é obrigatória")

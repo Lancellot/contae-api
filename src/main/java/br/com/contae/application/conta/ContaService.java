@@ -4,12 +4,11 @@ import br.com.contae.api.conta.dto.ContaRequestDTO;
 import br.com.contae.api.conta.dto.ContaResponseDTO;
 import br.com.contae.api.conta.mapper.ContaMapper;
 import br.com.contae.domain.conta.Conta;
+import br.com.contae.domain.exception.RecursoNaoEncontradoException;
 import br.com.contae.domain.usuario.Usuario;
 import br.com.contae.infrastructure.conta.ContaRepository;
 import br.com.contae.infrastructure.usuario.UsuarioRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -33,8 +32,7 @@ public class ContaService {
 
     public ContaResponseDTO salvar(ContaRequestDTO dto, String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
 
         Conta conta = ContaMapper.toEntity(dto, usuario);
         Conta contaSalva = contaRepository.save(conta);
@@ -43,15 +41,13 @@ public class ContaService {
 
     public ContaResponseDTO buscarPorId(Long id, String email) {
         Conta conta = contaRepository.findByIdAndUsuario_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Conta não encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada"));
         return ContaMapper.toResponseDTO(conta);
     }
 
     public void excluir(Long id, String email) {
         Conta conta = contaRepository.findByIdAndUsuario_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Conta não encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Conta não encontrada"));
         contaRepository.delete(conta);
     }
 }

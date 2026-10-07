@@ -4,14 +4,14 @@ import br.com.contae.api.auth.dto.LoginRequestDTO;
 import br.com.contae.api.auth.dto.LoginResponseDTO;
 import br.com.contae.infrastructure.security.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import br.com.contae.domain.exception.CredenciaisInvalidasException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +31,8 @@ public class AuthenticationService {
 
             return new LoginResponseDTO(token);
 
-        } catch (BadCredentialsException ex) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos");
+        } catch (BadCredentialsException | DisabledException ex) {
+            throw new CredenciaisInvalidasException();
         }
     }
 }
