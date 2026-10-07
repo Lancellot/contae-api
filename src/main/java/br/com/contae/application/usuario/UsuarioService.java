@@ -37,7 +37,7 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public List<UsuarioResponseDTO> listarTodos(String email) {
+    public List<UsuarioResponseDTO> buscarUsuarioAutenticado(String email) {
         return usuarioRepository.findByEmail(email)
                 .stream()
                 .map(usuarioMapper::toResponseDTO)
@@ -62,9 +62,7 @@ public class UsuarioService {
 
         usuarioMapper.atualizarEntity(usuario, dto);
 
-        if (dto.senha() != null && !dto.senha().isBlank()) {
-            usuario.setSenha(passwordEncoder.encode(dto.senha()));
-        }
+        usuario.setSenha(passwordEncoder.encode(dto.senha()));
 
         Usuario atualizado = usuarioRepository.save(usuario);
         return usuarioMapper.toResponseDTO(atualizado);
