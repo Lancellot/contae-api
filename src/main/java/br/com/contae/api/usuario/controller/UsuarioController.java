@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -26,29 +27,30 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos() {
-        return ResponseEntity.ok(usuarioService.listarTodos());
+    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos(Authentication authentication) {
+        return ResponseEntity.ok(usuarioService.listarTodos(authentication.getName()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.buscarPorId(id));
+    public ResponseEntity<UsuarioResponseDTO> buscarPorId(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(usuarioService.buscarPorId(id, authentication.getName()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody UsuarioRequestDTO dto) {
-        return ResponseEntity.ok(usuarioService.atualizar(id, dto));
+    public ResponseEntity<UsuarioResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody UsuarioRequestDTO dto,
+                                                        Authentication authentication) {
+        return ResponseEntity.ok(usuarioService.atualizar(id, dto, authentication.getName()));
     }
 
     @PatchMapping("/{id}/inativar")
-    public ResponseEntity<Void> inativar(@PathVariable Long id) {
-        usuarioService.inativar(id);
+    public ResponseEntity<Void> inativar(@PathVariable Long id, Authentication authentication) {
+        usuarioService.inativar(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        usuarioService.excluir(id);
+    public ResponseEntity<Void> excluir(@PathVariable Long id, Authentication authentication) {
+        usuarioService.excluir(id, authentication.getName());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

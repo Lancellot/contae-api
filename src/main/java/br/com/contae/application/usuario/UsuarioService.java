@@ -37,22 +37,22 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public List<UsuarioResponseDTO> listarTodos() {
-        return usuarioRepository.findAll()
+    public List<UsuarioResponseDTO> listarTodos(String email) {
+        return usuarioRepository.findByEmail(email)
                 .stream()
                 .map(usuarioMapper::toResponseDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public UsuarioResponseDTO buscarPorId(Long id) {
-        Usuario usuario = buscarEntidadePorId(id);
+    public UsuarioResponseDTO buscarPorId(Long id, String email) {
+        Usuario usuario = buscarEntidadePorId(id, email);
         return usuarioMapper.toResponseDTO(usuario);
     }
 
     @Transactional
-    public UsuarioResponseDTO atualizar(Long id, UsuarioRequestDTO dto) {
-        Usuario usuario = buscarEntidadePorId(id);
+    public UsuarioResponseDTO atualizar(Long id, UsuarioRequestDTO dto, String email) {
+        Usuario usuario = buscarEntidadePorId(id, email);
 
         usuarioRepository.findByEmail(dto.email())
                 .filter(outro -> !outro.getId().equals(id))
@@ -71,20 +71,21 @@ public class UsuarioService {
     }
 
     @Transactional
-    public void inativar(Long id) {
-        Usuario usuario = buscarEntidadePorId(id);
+    public void inativar(Long id, String email) {
+        Usuario usuario = buscarEntidadePorId(id, email);
         usuario.setAtivo(false);
         usuarioRepository.save(usuario);
     }
 
     @Transactional
-    public void excluir(Long id) {
-        Usuario usuario = buscarEntidadePorId(id);
+    public void excluir(Long id, String email) {
+        Usuario usuario = buscarEntidadePorId(id, email);
         usuarioRepository.delete(usuario);
     }
 
-    private Usuario buscarEntidadePorId(Long id) {
+    private Usuario buscarEntidadePorId(Long id, String email) {
         return usuarioRepository.findById(id)
+                .filter(usuario -> usuario.getEmail().equals(email))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
     }
 }

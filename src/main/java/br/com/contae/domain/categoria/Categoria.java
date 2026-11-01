@@ -1,4 +1,5 @@
 package br.com.contae.domain.categoria;
+import br.com.contae.domain.usuario.Usuario;
 import jakarta.persistence.*;
 
 @Entity
