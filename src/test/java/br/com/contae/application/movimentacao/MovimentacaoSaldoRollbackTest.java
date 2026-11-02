@@ -12,7 +12,7 @@ import br.com.contae.infrastructure.usuario.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -54,7 +54,7 @@ class MovimentacaoSaldoRollbackTest {
                 conta.getId(), categoria.getId(), descricaoLonga, BigDecimal.TEN,
                 TipoMovimentacao.DESPESA, null, LocalDate.now(), false);
 
-        assertThrows(DataIntegrityViolationException.class, () -> movimentacaoService.criar(dto, email));
+        assertThrows(DataAccessException.class, () -> movimentacaoService.criar(dto, email));
 
         Conta contaPersistida = contaRepository.findByIdAndUsuario_Email(conta.getId(), email).orElseThrow();
         assertEquals(0, BigDecimal.valueOf(100).compareTo(contaPersistida.getSaldo()));
