@@ -49,5 +49,10 @@ public class Movimentacao {
     @Column(nullable = false)
     private Boolean recorrente;
 
+    @Column(name = "saldo_original", precision = 15, scale = 2)
+    private BigDecimal saldoOriginal;
+
+    @Column(name = "saldo_apos", precision = 15, scale = 2)
+    private BigDecimal saldoApos;
 
 }

@@ -6,8 +6,8 @@ import br.com.contae.domain.categoria.Categoria;
 import br.com.contae.domain.conta.Conta;
 import br.com.contae.domain.movimentacao.Movimentacao;
 
-
-
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class MovimentacaoMapper {
 
@@ -44,11 +44,22 @@ public class MovimentacaoMapper {
         movimentacao.setValor(dto.getValor());
         movimentacao.setTipoMovimentacao(dto.getTipoMovimentacao());
         movimentacao.setTipoDespesa(dto.getTipoDespesa());
-        movimentacao.setData(dto.getData());
+
+        // Proteção para não sobrescrever a data com null se o DTO não mandar
+        if (dto.getData() != null) {
+            movimentacao.setData(dto.getData());
+        }
+
         movimentacao.setRecorrente(dto.getRecorrente());
     }
 
+    // Versão padrão usada nas listagens
     public static MovimentacaoResponseDTO toResponseDTO(Movimentacao movimentacao) {
+        return toResponseDTO(movimentacao, movimentacao.getSaldoOriginal());
+    }
+
+    // Versão completa que recebe o saldo original (caso queira passar manualmente)
+    public static MovimentacaoResponseDTO toResponseDTO(Movimentacao movimentacao, BigDecimal saldoOriginal) {
 
         MovimentacaoResponseDTO dto = new MovimentacaoResponseDTO();
 
@@ -62,7 +73,16 @@ public class MovimentacaoMapper {
         dto.setData(movimentacao.getData());
         dto.setRecorrente(movimentacao.getRecorrente());
 
+        // Preenchimento dos nomes e dos saldos fixos salvos na movimentação
+        dto.setNomeConta(movimentacao.getConta().getNome());
+        dto.setNomeCategoria(movimentacao.getCategoria().getNome());
+
+        // Usa o saldo original salvo (se veio parâmetro, prioriza ele; senão pega da entidade)
+        dto.setSaldoOriginalConta(saldoOriginal != null ? saldoOriginal : movimentacao.getSaldoOriginal());
+
+        // Exibe o saldo de quanto a conta ficou após essa movimentação específica
+        dto.setSaldoAtualConta(movimentacao.getSaldoApos());
+
         return dto;
     }
-
 }

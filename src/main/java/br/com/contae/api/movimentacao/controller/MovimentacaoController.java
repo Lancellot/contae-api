@@ -29,10 +29,10 @@ public class MovimentacaoController {
     @PostMapping
     @Operation(summary = "Criar movimentação")
     public ResponseEntity<MovimentacaoResponseDTO> criar(
-                        @Valid @RequestBody MovimentacaoRequestDTO dto,
-                        Authentication authentication) {
+            @Valid @RequestBody MovimentacaoRequestDTO dto,
+            Authentication authentication) {
 
-                MovimentacaoResponseDTO movimentacao = movimentacaoService.criar(dto, authentication.getName());
+        MovimentacaoResponseDTO movimentacao = movimentacaoService.criar(dto, authentication.getName());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -43,63 +43,63 @@ public class MovimentacaoController {
     @Operation(summary = "Atualizar movimentação")
     public ResponseEntity<MovimentacaoResponseDTO> atualizar(
             @PathVariable Long id,
-                        @Valid @RequestBody MovimentacaoRequestDTO dto,
-                        Authentication authentication) {
+            @Valid @RequestBody MovimentacaoRequestDTO dto,
+            Authentication authentication) {
 
         MovimentacaoResponseDTO movimentacao =
-                                movimentacaoService.atualizar(id, dto, authentication.getName());
+                movimentacaoService.atualizar(id, dto, authentication.getName());
 
         return ResponseEntity.ok(movimentacao);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Deletar movimentação")
-        public ResponseEntity<Void> deletar(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Void> deletar(@PathVariable Long id, Authentication authentication) {
 
-                movimentacaoService.deletar(id, authentication.getName());
+        movimentacaoService.deletar(id, authentication.getName());
 
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     @Operation(summary = "Buscar todas as movimentações")
-        public ResponseEntity<List<MovimentacaoResponseDTO>> buscarTodas(Authentication authentication) {
+    public ResponseEntity<List<MovimentacaoResponseDTO>> buscarTodas(Authentication authentication) {
 
         return ResponseEntity.ok(
-                                movimentacaoService.buscarTodas(authentication.getName())
+                movimentacaoService.buscarTodas(authentication.getName())
         );
     }
 
     @GetMapping("/data/{data}")
     @Operation(summary = "Buscar movimentações por data")
     public ResponseEntity<List<MovimentacaoResponseDTO>> buscarPorData(
-                        @PathVariable LocalDate data,
-                        Authentication authentication) {
+            @PathVariable LocalDate data,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                                movimentacaoService.buscarPorData(data, authentication.getName())
+                movimentacaoService.buscarPorData(data, authentication.getName())
         );
     }
 
     @GetMapping("/categoria/{categoriaId}")
     @Operation(summary = "Buscar movimentações por categoria")
     public ResponseEntity<List<MovimentacaoResponseDTO>> buscarPorCategoria(
-                        @PathVariable Long categoriaId,
-                        Authentication authentication) {
+            @PathVariable Long categoriaId,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                                movimentacaoService.buscarPorCategoria(categoriaId, authentication.getName())
+                movimentacaoService.buscarPorCategoria(categoriaId, authentication.getName())
         );
     }
 
     @GetMapping("/conta/{contaId}")
     @Operation(summary = "Buscar movimentações por conta")
     public ResponseEntity<List<MovimentacaoResponseDTO>> buscarPorConta(
-                        @PathVariable Long contaId,
-                        Authentication authentication) {
+            @PathVariable Long contaId,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                                movimentacaoService.buscarPorConta(contaId, authentication.getName())
+                movimentacaoService.buscarPorConta(contaId, authentication.getName())
         );
     }
 }

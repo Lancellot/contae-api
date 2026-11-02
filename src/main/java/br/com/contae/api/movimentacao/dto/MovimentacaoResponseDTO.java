@@ -26,4 +26,9 @@ public class MovimentacaoResponseDTO {
     private LocalDate data;
     private Boolean recorrente;
 
+    private String nomeCategoria;
+    private String nomeConta;
+    private BigDecimal saldoOriginalConta;
+    private BigDecimal saldoAtualConta;
+
 }

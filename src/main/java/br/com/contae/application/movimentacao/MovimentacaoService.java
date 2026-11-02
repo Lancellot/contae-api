@@ -11,7 +11,6 @@ import br.com.contae.domain.movimentacao.TipoMovimentacao;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
 import br.com.contae.infrastructure.conta.ContaRepository;
 import br.com.contae.infrastructure.movimentacao.MovimentacaoRepository;
-
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +20,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -31,40 +31,33 @@ public class MovimentacaoService {
     private final ContaRepository contaRepository;
     private final CategoriaRepository categoriaRepository;
 
-    // Criar
     @Transactional
     public MovimentacaoResponseDTO criar(MovimentacaoRequestDTO dto, String email) {
-
         Conta conta = contaRepository.findLockedByIdAndUsuario_Email(dto.getContaId(), email)
                 .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"));
 
         Categoria categoria = categoriaRepository.findByIdAndUsuario_Email(dto.getCategoriaId(), email)
                 .orElseThrow(() -> recursoNaoEncontrado("Categoria não encontrada"));
 
-        Movimentacao movimentacao = MovimentacaoMapper.toEntity(
-                dto,
-                conta,
-                categoria
-        );
+        BigDecimal saldoOriginal = conta.getSaldo();
 
-                if (dto.getTipoMovimentacao() == TipoMovimentacao.RECEITA) {
-                        conta.depositar(dto.getValor());
-                } else {
-                        conta.sacar(dto.getValor());
-                }
+        Movimentacao movimentacao = MovimentacaoMapper.toEntity(dto, conta, categoria);
+        movimentacao.setSaldoOriginal(saldoOriginal);
+
+        aplicarEfeito(conta, dto.getTipoMovimentacao(), dto.getValor(), false);
+        contaRepository.saveAndFlush(conta);
+
+        movimentacao.setSaldoApos(conta.getSaldo());
+        if (movimentacao.getData() == null) {
+            movimentacao.setData(LocalDate.now());
+        }
 
         Movimentacao salva = movimentacaoRepository.save(movimentacao);
-
-        return MovimentacaoMapper.toResponseDTO(salva);
+        return MovimentacaoMapper.toResponseDTO(salva, saldoOriginal);
     }
 
-    // Atualizar
     @Transactional
-    public MovimentacaoResponseDTO atualizar(
-            Long id,
-            MovimentacaoRequestDTO dto,
-            String email) {
-
+    public MovimentacaoResponseDTO atualizar(Long id, MovimentacaoRequestDTO dto, String email) {
         Movimentacao movimentacao = movimentacaoRepository.findLockedByIdAndConta_Usuario_Email(id, email)
                 .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
 
@@ -73,98 +66,101 @@ public class MovimentacaoService {
         BigDecimal valorAnterior = movimentacao.getValor();
 
         Map<Long, Conta> contasBloqueadas = bloquearContas(contaAnterior.getId(), dto.getContaId(), email);
-        Conta conta = contasBloqueadas.get(dto.getContaId());
+        Conta contaDestino = contasBloqueadas.get(dto.getContaId());
 
         Categoria categoria = categoriaRepository.findByIdAndUsuario_Email(dto.getCategoriaId(), email)
                 .orElseThrow(() -> recursoNaoEncontrado("Categoria não encontrada"));
 
-        MovimentacaoMapper.atualizar(
-                movimentacao,
-                dto,
-                conta,
-                categoria
-        );
-
         aplicarEfeito(contaAnterior, tipoAnterior, valorAnterior, true);
-        aplicarEfeito(conta, dto.getTipoMovimentacao(), dto.getValor(), false);
+        contaRepository.saveAndFlush(contaAnterior);
+
+        BigDecimal saldoOriginalNovo = contaDestino.getSaldo();
+        movimentacao.setSaldoOriginal(saldoOriginalNovo);
+
+        MovimentacaoMapper.atualizar(movimentacao, dto, contaDestino, categoria);
+
+        aplicarEfeito(contaDestino, dto.getTipoMovimentacao(), dto.getValor(), false);
+        if (!Objects.equals(contaAnterior.getId(), contaDestino.getId())) {
+            contaRepository.saveAndFlush(contaDestino);
+        } else {
+            contaRepository.saveAndFlush(contaAnterior);
+        }
+
+        movimentacao.setSaldoApos(contaDestino.getSaldo());
+        if (movimentacao.getData() == null) {
+            movimentacao.setData(LocalDate.now());
+        }
 
         Movimentacao atualizada = movimentacaoRepository.save(movimentacao);
-
         return MovimentacaoMapper.toResponseDTO(atualizada);
     }
 
-    // Deletar
-        @Transactional
-        public void deletar(Long id, String email) {
+    @Transactional
+    public void deletar(Long id, String email) {
+        Movimentacao movimentacao = movimentacaoRepository.findLockedByIdAndConta_Usuario_Email(id, email)
+                .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
 
-                Movimentacao movimentacao = movimentacaoRepository.findLockedByIdAndConta_Usuario_Email(id, email)
-                                .orElseThrow(() -> recursoNaoEncontrado("Movimentação não encontrada"));
-
-        contaRepository.findLockedByIdAndUsuario_Email(movimentacao.getConta().getId(), email)
+        Conta conta = contaRepository.findLockedByIdAndUsuario_Email(movimentacao.getConta().getId(), email)
                 .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"));
-        aplicarEfeito(movimentacao.getConta(), movimentacao.getTipoMovimentacao(), movimentacao.getValor(), true);
+
+        aplicarEfeito(conta, movimentacao.getTipoMovimentacao(), movimentacao.getValor(), true);
+        contaRepository.saveAndFlush(conta);
+
         movimentacaoRepository.delete(movimentacao);
     }
 
-    // Buscar todas
-        public List<MovimentacaoResponseDTO> buscarTodas(String email) {
-
-                return movimentacaoRepository.findAllByConta_Usuario_Email(email)
+    public List<MovimentacaoResponseDTO> buscarTodas(String email) {
+        return movimentacaoRepository.findAllByConta_Usuario_Email(email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
-    // Buscar movimentações por data
-        public List<MovimentacaoResponseDTO> buscarPorData(LocalDate data, String email) {
-
-                return movimentacaoRepository.findByDataAndConta_Usuario_Email(data, email)
+    public List<MovimentacaoResponseDTO> buscarPorData(LocalDate data, String email) {
+        return movimentacaoRepository.findByDataAndConta_Usuario_Email(data, email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
-    // Buscar movimentações por categoria
-        public List<MovimentacaoResponseDTO> buscarPorCategoria(Long categoriaId, String email) {
-
-                return movimentacaoRepository.findByCategoriaIdAndConta_Usuario_Email(categoriaId, email)
+    public List<MovimentacaoResponseDTO> buscarPorCategoria(Long categoriaId, String email) {
+        return movimentacaoRepository.findByCategoriaIdAndConta_Usuario_Email(categoriaId, email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
-    // Buscar movimentações por conta
-        public List<MovimentacaoResponseDTO> buscarPorConta(Long contaId, String email) {
-
-                return movimentacaoRepository.findByContaIdAndConta_Usuario_Email(contaId, email)
+    public List<MovimentacaoResponseDTO> buscarPorConta(Long contaId, String email) {
+        return movimentacaoRepository.findByContaIdAndConta_Usuario_Email(contaId, email)
                 .stream()
                 .map(MovimentacaoMapper::toResponseDTO)
                 .toList();
     }
 
-        private void aplicarEfeito(Conta conta, TipoMovimentacao tipo, BigDecimal valor, boolean estornar) {
-                boolean receita = tipo == TipoMovimentacao.RECEITA;
-                if (receita != estornar) {
-                        conta.depositar(valor);
-                } else {
-                        conta.sacar(valor);
-                }
+    private void aplicarEfeito(Conta conta, TipoMovimentacao tipo, BigDecimal valor, boolean estornar) {
+        if (tipo == null) {
+            return;
         }
-
-        private Map<Long, Conta> bloquearContas(Long contaAnteriorId, Long contaNovaId, String email) {
-                Map<Long, Conta> contas = new HashMap<>();
-                java.util.Arrays.asList(contaAnteriorId, contaNovaId).stream()
-                        .filter(java.util.Objects::nonNull)
-                        .distinct()
-                        .sorted()
-                        .forEach(id ->
-                        contas.put(id, contaRepository.findLockedByIdAndUsuario_Email(id, email)
-                                .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"))));
-                return contas;
+        boolean receita = tipo == TipoMovimentacao.RECEITA;
+        if (receita != estornar) {
+            conta.depositar(valor);
+        } else {
+            conta.sacar(valor);
         }
+    }
 
-        private RecursoNaoEncontradoException recursoNaoEncontrado(String mensagem) {
-                return new RecursoNaoEncontradoException(mensagem);
-        }
+    private Map<Long, Conta> bloquearContas(Long contaAnteriorId, Long contaNovaId, String email) {
+        Map<Long, Conta> contas = new HashMap<>();
+        java.util.Arrays.asList(contaAnteriorId, contaNovaId).stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .sorted()
+                .forEach(id -> contas.put(id, contaRepository.findLockedByIdAndUsuario_Email(id, email)
+                        .orElseThrow(() -> recursoNaoEncontrado("Conta não encontrada"))));
+        return contas;
+    }
+
+    private RecursoNaoEncontradoException recursoNaoEncontrado(String mensagem) {
+        return new RecursoNaoEncontradoException(mensagem);
+    }
 }
-

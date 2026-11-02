@@ -43,7 +43,7 @@ public class MovimentacaoRequestDTO {
 
     private TipoDespesa tipoDespesa;
 
-    @NotNull
+
     private LocalDate data;
 
     @NotNull
