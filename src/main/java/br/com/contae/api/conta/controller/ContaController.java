@@ -5,8 +5,10 @@ import br.com.contae.api.conta.dto.ContaResponseDTO;
 import br.com.contae.application.conta.ContaService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -30,13 +32,15 @@ public class ContaController {
     }
 
     @PostMapping
-    public ContaResponseDTO salvar(@Valid @RequestBody ContaRequestDTO dto,
-                                   Authentication authentication) {
-        return contaService.salvar(dto, authentication.getName());
+    public ResponseEntity<ContaResponseDTO> salvar(@Valid @RequestBody ContaRequestDTO dto,
+                                                   Authentication authentication) {
+        ContaResponseDTO conta = contaService.salvar(dto, authentication.getName());
+        return ResponseEntity.created(URI.create("/contas/" + conta.getId())).body(conta);
     }
 
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Void> excluir(@PathVariable Long id, Authentication authentication) {
         contaService.excluir(id, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 }

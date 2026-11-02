@@ -1,10 +1,11 @@
-FROM maven:3.9.11-eclipse-temurin-21 AS build
+FROM maven:3.9.16-eclipse-temurin-21 AS build
 
 WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 COPY src ./src
+# GitHub Actions runs verify; keep image builds independent from Docker-backed Testcontainers.
 RUN mvn clean package -DskipTests -B
 
 FROM eclipse-temurin:21-jre

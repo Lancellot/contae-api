@@ -1,11 +1,11 @@
-services:
+﻿services:
   db:
     image: postgres:16-alpine
     container_name: contae-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-contae}
       POSTGRES_USER: ${POSTGRES_USER:-contae}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-contae}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -27,8 +27,8 @@ services:
     environment:
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-contae}
       DB_USERNAME: ${POSTGRES_USER:-contae}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-contae}
-      JWT_SECRET: ${JWT_SECRET:-chave-local-contae-com-pelo-menos-32-bytes}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
     ports:
       - "${API_PORT:-8080}:8080"
