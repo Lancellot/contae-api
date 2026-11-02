@@ -4,15 +4,14 @@ import br.com.contae.api.categoria.dto.CategoriaResponseDTO;
 import br.com.contae.api.categoria.dto.CategoriaRequestDTO;
 import br.com.contae.api.categoria.mapper.CategoriaMapper;
 import br.com.contae.domain.categoria.Categoria;
+import br.com.contae.domain.exception.RecursoNaoEncontradoException;
 import br.com.contae.domain.usuario.Usuario;
 import br.com.contae.infrastructure.categoria.CategoriaRepository;
 import br.com.contae.infrastructure.usuario.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import org.springframework.http.HttpStatus;
 import java.util.List;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +31,7 @@ public class CategoriaService {
     // Cria uma nova categoria a partir do DTO de entrada.
         public CategoriaResponseDTO salvar(CategoriaRequestDTO dto, String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
 
         // Converte DTO + Usuario em entidade Categoria.
         Categoria categoria = CategoriaMapper.toEntity(dto, usuario);
@@ -48,16 +46,14 @@ public class CategoriaService {
     // Busca uma categoria pelo ID e devolve ja como DTO de saida.
         public CategoriaResponseDTO buscarPorId(Long id, String email) {
         Categoria categoria = categoriaRepository.findByIdAndUsuario_Email(id, email)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada"));
         return CategoriaMapper.toResponseDTO(categoria);
     }
 
     // Exclui uma categoria pelo ID.
     public void excluir(Long id, String email) {
         Categoria categoria = categoriaRepository.findByIdAndUsuario_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria não encontrada"));
         categoriaRepository.delete(categoria);
     }
 }

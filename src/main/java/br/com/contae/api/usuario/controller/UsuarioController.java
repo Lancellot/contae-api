@@ -27,8 +27,8 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioResponseDTO>> listarTodos(Authentication authentication) {
-        return ResponseEntity.ok(usuarioService.listarTodos(authentication.getName()));
+    public ResponseEntity<List<UsuarioResponseDTO>> buscarUsuarioAutenticado(Authentication authentication) {
+        return ResponseEntity.ok(usuarioService.buscarUsuarioAutenticado(authentication.getName()));
     }
 
     @GetMapping("/{id}")
